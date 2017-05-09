@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WK4Project</title>
+  <meta charset="utf-8">
+  <meta name="description" content="WK4Project">
+  <meta name="author" content="blitz95">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>WK4Project</h1>
+    <h2>Diamond price estimation based on carat weight</h2>
+    <p>blitz95<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <article data-timings="">
+    <style type = "text/css">
+
+code.r{
+    font-size: 9px;
+}
+
+</style>
+
+<h2>Data Products  - WK4 Project</h2>
+
+<p>&nbsp;</p>
+
+<h4>This project provides a very simply cost estimator for diamonds based on carat weight alone.  While there are other factors that contribute to the cost of a diamond this estimator uses only carat weight.</h4>
+
+<ul>
+<li>The cost is estimated in Singapore dollars.</li>
+<li>The estimator uses a Shiny application with a slider selector. </li>
+<li>The data is from the UsingR packages, &quot;diamonds&quot; data set.</li>
+<li>The data is fit with a simple linear model.</li>
+</ul>
+
+<h4>When the user selects a carat weight, the plot updates showing the carat weight/price point of the carat weight selected.  The esimated price in Singapore dollars is shown below the plot. If carat weights higher than</h4>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>User Interface Code (ui.R) code</h2>
+  </hgroup>
+  <article data-timings="">
+    <h5>The user interface code controls the user interface</h5>
+
+<pre><code class="r">library(shiny)
+library(UsingR, quietly = TRUE)
+data(diamonds)
+
+# Define UI for application that predicts the price of a diamond based on weight
+shinyUI(fluidPage(
+  # Application title
+  titlePanel(&quot;Predict price of diamond based on weight of diamond in carats&quot;),
+  # Sidebar with a slider input for carats
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput(&quot;sliderCarat&quot;,&quot;What is the weight of the diamond in carats?&quot;, 0.20, 5.01,value = 2.5)
+    ),
+    # Show a plot of Price verses Weight in carats&quot;
+    mainPanel(
+        h4(&quot;This program fits a linear model to a data set of prices verses carat weights of diamonds&quot;),
+        h4(&quot;The user selects a carat weight, the using the model, a prediction of Singapore dollar cost is presented&quot;),
+        h5(&quot;Due to the size of the data set, the refresh may take a few seconds.&quot;),  
+      plotOutput(&quot;plot&quot;),
+      h4(&quot;Predicted price in Singapore Dollars (SIN$) from Model Fit:&quot;),
+      textOutput(&quot;pred&quot;)
+        )
+    )
+))
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="id" style="background:;">
+  <hgroup>
+    <h2>Server Code (server.R) code</h2>
+  </hgroup>
+  <article data-timings="">
+    <h4>The server code controls what the app does.  For this application, the server code fits a simple linear model to the diamonds data, takes the input from the slider, uses a predict function to estimate a prediction, plots the result, and provides a prediction of price in Singapore dollars.</h4>
+
+<pre><code class="r">library(UsingR, quietly = TRUE)
+data(diamonds)
+library(shiny)
+
+
+# Define server logic required to predict cost of diamond from based on weight input&quot;
+shinyServer(function(input, output) {
+    model &lt;- lm(price ~ carat, data = diamonds)
+
+    modelpred &lt;- reactive({
+        caratInput &lt;- input$sliderCarat
+        predict(model, newdata = data.frame(carat = caratInput))
+    })    
+
+    output$plot &lt;- renderPlot({
+        CaratInput &lt;- input$sliderCarat
+
+        plot(diamonds$carat, diamonds$price, xlab = &quot;Weight (Carats)&quot;, 
+             ylab = &quot;Price (SIN $)&quot;, bty = &quot;n&quot;, pch = 16, col=rgb(0,0,0,alpha=0.1),
+             xlim = c(0,5), ylim = c(300,35000))
+
+        abline(model, col = &quot;red&quot;, lwd = 2)
+
+        legend(25, 250, c(&quot;Model Prediction&quot;), pch = 16,
+               col = c(&quot;red&quot;), bty = &quot;n&quot;, cex = 1.2)
+        points(CaratInput, modelpred(), col = &quot;red&quot;, pch = 10, cex = 2.5)
+    })
+
+    output$pred &lt;- renderText({
+        paste(&quot;SIN $&quot;, format(round(modelpred(), 2), big.mark = &quot;,&quot;))
+    })
+})
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="id" style="background:;">
+  <hgroup>
+    <h2>Resulting application for use</h2>
+  </hgroup>
+  <article data-timings="">
+    <h4>The prediction model plot covers carat weights from 0 to 5.01 carats.  However, due to a lack of data for  less than 0.3 carats or greater than 3 carats, the uncertainty in estimates from this simple linear model increases for carat weights less than 0.3 carats and greater than 3 carats.</h4>
+
+<p>&nbsp;</p>
+
+<h4>The interactive model can be accessed at the link below.</h4>
+
+<p>&nbsp;
+&nbsp;</p>
+
+<h4><a href="https://blitz95.shinyapps.io/WK4Project/">WK4Project- Diamond price based on carat weight</a></h4>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='NA'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='User Interface Code (ui.R) code'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Server Code (server.R) code'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Resulting application for use'>
+         4
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
